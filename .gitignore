@@ -1,45 +1,74 @@
-# 공통 — 비밀값(API 키, DB 비밀번호)은 절대 올리지 않습니다. 예시 파일(.env.example)만 커밋.
-.env
-.env.*
-!.env.example
+# ==============================================================================
+# 보안 및 환경변수 (API Key, DB 비밀번호, 인증서)
+# ==============================================================================
+**/.env
+**/.env.*
+!**/.env.example
 *.pem
 *.key
 *.p12
 *.jks
-.DS_Store
-*.log
+*.local
 
-# Spring Boot (로컬 H2 DB 파일 포함 — 회원 비밀번호 해시가 들어 있음)
+# ==============================================================================
+# Spring Boot / Java / Gradle
+# ==============================================================================
+.gradle/
+**/.gradle/
+build/
+**/build/
+out/
+**/out/
+bin/
+**/bin/
+*.class
+*.jar
+*.war
 backend/data/
+**/data/
 *.mv.db
 *.trace.db
 *.db
-backend/build/
-backend/.gradle/
-backend/bin/
-backend/out/
-*.class
+*.sqlite*
 
-# FastAPI
+# ==============================================================================
+# FastAPI / Python
+# ==============================================================================
 .venv/
+**/.venv/
 venv/
+**/venv/
 __pycache__/
+**/__pycache__/
 *.pyc
+*.pyo
 .pytest_cache/
 .ruff_cache/
 ai-server/models/*.pkl
 ai-server/models/*.pt
+ai-server/models/*.bin
 
-# React
+# ==============================================================================
+# Frontend (React / Vite)
+# ==============================================================================
 node_modules/
-frontend/dist/
+**/node_modules/
+dist/
+**/dist/
 .vite/
+**/.vite/
 coverage/
 *.tsbuildinfo
 
-# IDE (.vscode 는 팀 공유용으로 커밋)
+# ==============================================================================
+# IDE & OS
+# ==============================================================================
 .idea/
 *.iml
-
-# 개인 도구 설정
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.log
 .claude/

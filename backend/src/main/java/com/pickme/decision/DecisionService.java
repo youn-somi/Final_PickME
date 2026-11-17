@@ -121,8 +121,9 @@ public class DecisionService {
         if (!free.isEmpty()) {
             conditionParts.add(free);
         }
-        String conditions = truncate(String.join(", ", conditionParts), 1000);
 
+        String conditions = truncate(String.join(", ", conditionParts), 1000);
+            //AI 보낼 데이터 가공 구간 
         List<AiClient.DecisionOption> options = nonNull(req.options()).stream()
                 .filter(o -> o != null && !strip(o.title()).isEmpty())
                 .limit(5)
