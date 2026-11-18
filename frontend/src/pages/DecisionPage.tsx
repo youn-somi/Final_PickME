@@ -5,6 +5,7 @@ import { api, errorMessage } from '../api/client'
 import type { ConsultRequest, ConsultResponse, Criterion, DecisionOption, DecisionStyle } from '../api/types'
 import { useAuth } from '../lib/app-context'
 
+
 /** 기존 templates/decision/index.html (한 페이지 3단계 방식) */
 const CATEGORIES = ['음식/식사', '진로/직업', '소비/쇼핑', '연애/관계', '일상/생활', '학습/자기계발', '여행/여가', '기타']
 const CONDITION_CHIPS = [
@@ -101,6 +102,44 @@ export default function DecisionPage() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 로컬스토리지 
+  useEffect(() => {
+    const savedTemp = localStorage.getItem('decision_temp_data');
+    if (savedTemp) {
+      try {
+        const parsed = JSON.parse(savedTemp);
+        if(parsed.title  !== undefined ) setTitle(parsed.title);
+        if(parsed.content  !== undefined) setContent(parsed.content);
+        if(parsed.categories  !== undefined) setCategories(parsed.categories);
+        if(parsed.options  !== undefined) setOptions(parsed.options);
+
+        if(parsed.style  !== undefined) setStyle(parsed.style); 
+        if(parsed.conditions  !== undefined) setConditions(parsed.conditions); //예산,시간
+        if(parsed.conditionsFree  !== undefined) setConditionsFree(parsed.conditionsFree); //추가 조건텍스트
+        if(parsed.criteria   !== undefined) setCriteria(parsed.criteria); //가중치 
+      } catch (e) {
+        console.error('임시 저장 데이터를 읽어오는 중 에러 발생', e);
+      }
+    }
+
+     setIsLoaded(true);
+  }, []);
+  //임시 서랍 실시간 저장 
+  useEffect(() => {
+    //  짐다 꺼내기 전엔 저장 금지 
+    if(!isLoaded) return; 
+    const tempData = { title, content, categories, options, style, conditions, conditionsFree, criteria };
+    localStorage.setItem('decision_temp_data', JSON.stringify(tempData));
+  } , [isLoaded, title, content, categories, options, style, 
+    conditions ,conditionsFree, criteria ]); 
+
+
+
+  
+
+
 
 
 
