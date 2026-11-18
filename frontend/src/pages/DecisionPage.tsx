@@ -1,23 +1,12 @@
 import type { FormEvent } from 'react'
-
 import { useEffect, useMemo, useRef, useState } from 'react'
-
 import { Link, useSearchParams } from 'react-router'
-
 import { api, errorMessage } from '../api/client'
-
 import type { ConsultRequest, ConsultResponse, Criterion, DecisionOption, DecisionStyle } from '../api/types'
-
 import { useAuth } from '../lib/app-context'
 
-
-
 /** 기존 templates/decision/index.html (한 페이지 3단계 방식) */
-
-
-
 const CATEGORIES = ['음식/식사', '진로/직업', '소비/쇼핑', '연애/관계', '일상/생활', '학습/자기계발', '여행/여가', '기타']
-
 const CONDITION_CHIPS = [
 
   '예산이 정해져 있음',
@@ -31,9 +20,7 @@ const CONDITION_CHIPS = [
   '건강/체질을 고려해야 함',
 
 ]
-
 const CRITERIA_CHIPS = ['비용 (예산)', '시간 효율', '개인 만족도', '성장 가능성 및 기회', '안정성', '주변 사람들의 만족']
-
 const STYLE_LABELS: Record<DecisionStyle, string> = {
 
   soft: '💕 부드러운 공감형',
@@ -43,13 +30,8 @@ const STYLE_LABELS: Record<DecisionStyle, string> = {
   fact: '🧊 냉정한 팩트형',
 
 }
-
 const MAX_OPTIONS = 5
-
-
-
 // AI 상담 카테고리 이름 → 결정 도우미 카테고리 이름
-
 const CATEGORY_MAP: Record<string, string> = {
 
   '진로/이직': '진로/직업',
@@ -57,23 +39,14 @@ const CATEGORY_MAP: Record<string, string> = {
   '쇼핑/소비': '소비/쇼핑',
 
 }
-
-
-
 const emptyOption = (): DecisionOption => ({ title: '', note: '' })
-
-
-
 /** AI 상담에서 넘어온 값(쿼리스트링)으로 미리 채우기 */
 
 function readPrefill(params: URLSearchParams) {
 
   const title = (params.get('title') ?? '').trim()
-
   const content = (params.get('content') ?? '').trim()
-
   const rawCategory = (params.get('category') ?? '').trim()
-
   const category = (CATEGORY_MAP[rawCategory as keyof typeof CATEGORY_MAP] ?? rawCategory) as string
 
   let options: string[] = []
@@ -101,28 +74,16 @@ function readPrefill(params: URLSearchParams) {
 export default function DecisionPage() {
 
   const { user } = useAuth()
-
   const [params] = useSearchParams()
-
   const prefill = useMemo(() => readPrefill(params), [params])
-
-
-
   const [categories, setCategories] = useState<string[]>(prefill.categories)
-
   const [style, setStyle] = useState<DecisionStyle>('objective')
-
   const [title, setTitle] = useState(prefill.title)
-
   const [content, setContent] = useState(prefill.content)
-
   const [conditions, setConditions] = useState<string[]>([])
-
   const [conditionsFree, setConditionsFree] = useState('')
-
   const [options, setOptions] = useState<DecisionOption[]>(() => {
-
-    const opts = prefill.options.map((t) => ({ title: t, note: '' }))
+  const opts = prefill.options.map((t) => ({ title: t, note: '' }))
 
     while (opts.length < 2) opts.push(emptyOption())
 
@@ -131,25 +92,14 @@ export default function DecisionPage() {
   })
 
   const [criteria, setCriteria] = useState<Criterion[]>([])
-
   const [newCriterion, setNewCriterion] = useState('')
-
-
-
   const [loading, setLoading] = useState(false)
-
   const [error, setError] = useState<string | null>(null)
-
   const [result, setResult] = useState<string | null>(null)
-
   const [resultStyle, setResultStyle] = useState<DecisionStyle | null>(null)
-
   const [restyling, setRestyling] = useState<DecisionStyle | null>(null)
-
   const [saved, setSaved] = useState(false)
-
-
-
+  const [saving, setSaving] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
 
 
@@ -306,6 +256,24 @@ export default function DecisionPage() {
 
     }
 
+  }
+
+  //저장하기 버튼 추가
+  async function handleSave(){
+    if (!result) return; 
+    setSaving(true); //저장중 표시 켜기 (로딩용)
+    try{
+      // 기존에 쓰던 buildRequest(현재 스타일)에 AI 결과(result)만 합쳐서 백엔드로 전송
+      await api.post('/decisions/save', {
+        ...buildRequest(resultStyle ?? style),
+        result: result,
+      });
+      setSaved(true);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSaving(false); //저장중 표시 끄기
+    }
   }
 
 
@@ -877,23 +845,22 @@ export default function DecisionPage() {
             <p className="hint mt-3">
 
               {saved ? (
-
                 <>
-
                   이 상담은 <Link to="/history">고민 기록</Link>에 저장되었어요.
-
                 </>
-
-              ) : user ? null : (
-
-                <>
-
+              ) : user ? ( //로그인한 상태 저장버튼 표시 
+                <button 
+                type="button"
+                className="btn btn-primary"
+                disabled={saving}
+                onClick={() => void handleSave()}
+                > 
+                {saving ? '저장 중...' : '💾 이 상담 결과 저장하기'}
+                </button>
+                ):( <>
                   <Link to="/login?next=/decision">로그인</Link>하면 상담 결과가 고민 기록에 저장돼요.
-
                 </>
-
               )}
-
             </p>
 
             <div className="restyle-box">

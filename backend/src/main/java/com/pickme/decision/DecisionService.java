@@ -48,7 +48,7 @@ public class DecisionService {
 
     public record ConsultRequest(
             List<String> categories, String style, String title, String content,
-            List<String> conditions, String conditionsFree, List<Option> options, List<Criterion> criteria) {
+            List<String> conditions, String conditionsFree, List<Option> options, List<Criterion> criteria, String result) {
     }
 
     public record ConsultResponse(String result, Integer decisionId) {
@@ -64,8 +64,16 @@ public class DecisionService {
     public ConsultResponse consult(ConsultRequest req, Integer userId) {
         Prepared p = prepare(req);
         String result = aiClient.consult(toAiRequest(p));
-        Integer savedId = userId == null ? null : save(userId, p, result);
-        return new ConsultResponse(result, savedId);
+        //Integer savedId = userId == null ? null : save(userId, p, result);
+        return new ConsultResponse(result, null);
+    }
+
+    public Integer saveManual(Integer userId, ConsultRequest req, String result){
+        if (userId == null){
+            return null;
+        }
+        Prepared p = prepare(req);
+        return save(userId, p, result);
     }
 
     public String restyle(ConsultRequest req) {

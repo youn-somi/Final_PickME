@@ -3,6 +3,7 @@ package com.pickme.decision;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,4 +40,23 @@ public class DecisionController {
     public List<DecisionService.PopularItem> popular() {
         return decisionService.popular();
     }
+
+
+   // 수동 저장: [저장하기] 버튼을 누를 때만 DB에 저장함
+    @PostMapping("/save")
+    public ResponseEntity<?> saveDecision(@RequestBody ConsultRequest req) {
+        Integer userId = LoginUser.currentIdOrNull();
+        if (userId == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        
+        Integer savedId = decisionService.saveManual(userId, req, req.result());
+
+        if (savedId == null) {
+            return ResponseEntity.badRequest().body("저장에 실패했습니다.");
+        }
+
+        return ResponseEntity.ok(Map.of("decisionId", savedId, "message", "성공적으로 저장되었습니다."));
+    }
+
 }
