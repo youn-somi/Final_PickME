@@ -80,6 +80,16 @@ public class DecisionService {
         return aiClient.consult(toAiRequest(prepare(req)));
     }
 
+    // ai 서버에서 역질문 요청 
+    public List<String> questions(ConsultRequest req) {
+        //기존 상담 입력  정리 ,내용 비어있으면 400 
+        Prepared p = prepare(req);
+        //함수 호출 질문 목록 받기
+        return aiClient.questions(toAiRequest(p));
+    }
+
+
+
     @Transactional(readOnly = true)
     public List<PopularItem> popular() {
         return decisions.popularTitles(PageRequest.of(0, 5)).stream()

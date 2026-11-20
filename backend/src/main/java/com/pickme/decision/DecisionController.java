@@ -30,6 +30,18 @@ public class DecisionController {
         return decisionService.consult(req, LoginUser.currentIdOrNull());
     }
 
+    // 역질문 화면에서 고민을 보내면,  ai 가 물어볼 질문 목록  돌려주기
+    @PostMapping("/questions")
+    public Map<String, List<String>> questions (@RequestBody ConsultRequest req) {
+        // 서비스에 질문 목록 요청
+        List<String> questions = decisionService.questions(req);
+        // ...형태로 돌려주기
+        return Map.of("questions", questions);
+    }
+    
+
+
+
     /** 결과 화면에서 스타일만 바꿔 다시 상담 (저장하지 않음) */
     @PostMapping("/restyle")
     public Map<String, String> restyle(@RequestBody ConsultRequest req) {

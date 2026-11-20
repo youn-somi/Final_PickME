@@ -52,6 +52,77 @@ def get_ai_consultation(prompt: str) -> str:
         ) from error
 
 
+# 역질문 프롬프트 
+def build_question_prompt(title: str,
+                          content: str,
+                          options: list[dict]|None = None, # 선택지
+                          criteria : str | None = None, #가중지 
+                          ) -> str:
+    
+    # AI 읽는 문자열정리
+    option_text = "\n".join(
+        f"{i}. {opt['title']}"
+        for i , opt in enumerate(options or [], 1)
+    )
+    
+    #선택,가중치 판단
+    criteria_text = criteria.strip() if criteria and criteria.strip() else " 지정 없음 "
+    lines = [
+ 
+        "질문 작성 규칙:",
+         "1. 고민 제목, 고민 내용, 선택지, 판단 기준을 각각 확인합니다.",
+        "2. 각 입력 항목에 등장하는 대상이 서로 일치하는지 비교합니다.",
+        "3. 고민 제목이나 내용에 등장한 선택지가 목록에서 누락되면 지적합니다.",
+        "4. 선택지 목록에 고민 내용과 다른 대상이 있다면 먼저 확인 질문을 합니다.",
+        "5. 선택지의 누락이나 불일치가 있다면 일반적인 취향 질문보다 우선합니다.",
+        "6. 사용자가 입력한 선택지를 임의로 제외하거나 추가하지 않습니다.",
+        "7. 이미 제공된 정보는 다시 묻지 않습니다.",
+        "8. 정보가 충분하다면 억지로 질문하지 않습니다.",
+        "9. 질문은 최대 3개까지 짧고 구체적으로 작성합니다.",
+        "10. 설명이나 인사 없이 질문만 줄바꿈으로 나열합니다.",
+
+        f"[고민 제목] {title or '제목 없음'}",
+        "[고민 내용]",
+        content,
+        "",
+        "[비교할 선택지]",
+        option_text or "선택지 없음",
+        "",
+        f"[판단 기준 및 가중치] {criteria_text}",
+        
+    ]
+    
+    
+    # 줄바꿈 
+    return "\n".join(lines)
+
+
+#AI ->답을 질문 목록
+def get_follow_up_questions(
+    title: str, 
+    content: str,
+    options: list[dict] | None = None,
+    criteria: str | None = None,
+    ) -> list[str] :
+    #  지시문 
+    prompt = build_question_prompt(title, content, options, criteria)
+    
+    # AI 호출 
+    text = get_ai_consultation(prompt)
+    
+    # 줄단위 나누기 
+    questions = []
+    for line in text.splitlines():
+        # 앞뒤공백 , 기호 지움
+        cleaned = line.strip().lstrip("-*0123456789.) ") .strip()
+        # 빈줄 건너뜀
+        if cleaned:
+            questions.append(cleaned)
+            # 질문은 3개만
+    return questions[:3]        
+            
+
+
 def build_prompt(
     categories: list[str],
     style: str,

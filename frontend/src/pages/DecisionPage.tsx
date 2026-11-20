@@ -4,6 +4,10 @@ import { Link, useSearchParams } from 'react-router'
 import { api, errorMessage } from '../api/client'
 import type { ConsultRequest, ConsultResponse, Criterion, DecisionOption, DecisionStyle } from '../api/types'
 import { useAuth } from '../lib/app-context'
+//역질문 
+type QuestionsResponse = { questions: string[] }
+
+
 
 
 /** 기존 templates/decision/index.html (한 페이지 3단계 방식) */
@@ -101,6 +105,9 @@ export default function DecisionPage() {
   const [restyling, setRestyling] = useState<DecisionStyle | null>(null)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  //역질문  
+  const [ questions, setQuestions] = useState<string[]>([])
+  const [asking, setAsking] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -232,7 +239,6 @@ export default function DecisionPage() {
 
 
   async function submit(e: FormEvent) {
-
     e.preventDefault()
 
     if (!content.trim()) {
@@ -268,6 +274,28 @@ export default function DecisionPage() {
     }
 
   }
+
+  //역질문 
+  async function askFollowUp() {
+    if (! content.trim()){
+       setError('고민 내용을 입력해 주세요.')
+       return
+    }
+    setError(null)
+    setAsking(true) //질문만드는중 버튼
+    try {
+       const res = await api.post<QuestionsResponse>('/decisions/questions', buildRequest(style), { timeout: 120000 })
+      setQuestions(res.data.questions)
+
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setAsking(false)
+    }
+  }
+
+
+
 
 
 
@@ -841,6 +869,7 @@ export default function DecisionPage() {
 
 
 
+
       <div className="text-center mt-4">
 
         <button
@@ -864,6 +893,30 @@ export default function DecisionPage() {
         {loading && <span className="loading-text">⏳ AI가 고민을 분석하고 있어요... (10~20초 정도 걸려요)</span>}
 
       </div>
+
+      {/* [역질문 ]버튼 : 누르면 AI 물어볼 질문을 보여줌*/}
+      <div className="text-center mt-3">
+        <button 
+        type="button"
+        className="btn-restyle"
+        disabled={asking || loading}
+        onClick={() => void askFollowUp()}
+        >
+          {asking ? '질문 만드는 중 ...' : '❓ AI 역질문 받기'}
+        </button>
+      </div>
+      {/*역질문  받은 질문 목록 표시 */}
+      {questions.length > 0 && (
+        <div className = "panel mt-3">
+          <h3>AI 가 물어보는 질문</h3>
+          <ol>
+            {questions.map((q,i)=> (
+              <li key={i}> {q}</li>
+            ))}
+          </ol>
+          </div>
+      )}
+
 
 
 

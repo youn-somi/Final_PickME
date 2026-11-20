@@ -65,6 +65,18 @@ public class AiClient {
         return post("/decision/consult", request, DecisionResult.class).result();
     }
 
+    
+
+    // [역질문] AI 서버의 /decision/questions 를 호출해 질문 목록을 받아옵니다.
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record QuestionResult(List<String> questions) {
+    }
+
+    public List<String> questions(DecisionRequest request) {
+        // 기존 post() 함수를 그대로 써서 연결 실패와 오류 처리도 같은 방식으로 합니다.
+        return post("/decision/questions", request, QuestionResult.class).questions();
+    }
+
     private <T> T post(String uri, Object body, Class<T> type) {
         try {
             T result = aiRestClient.post()
