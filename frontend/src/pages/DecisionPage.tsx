@@ -210,6 +210,25 @@ export default function DecisionPage() {
 
   }
 
+  // 선택지 삭제 최소 2개는 유지
+// index: 지우려는 선택지의 순서 번호 (0번부터 시작)
+function removeOption (index : number) {
+  // 선택지가 2개 이하면 더 지우지 못하게 막음
+  if (options.length <= 2) {
+    // 화면에 알림창 띄우기
+    window.alert('최소 2개의 선택지가 필요해요.')
+    // 여기서 함수 끝내기 (아래 삭제 코드 실행 안 함)
+    return
+  }
+  //기존선택지 목록에서 내가 누른번호만 쏙배고 나머지 만 남기기
+  // (_, i): 내용(_)은 상관없고 순서(i)만 확인
+  // i !== index: 내가 삭제 누른 칸(index)만 빼고 나머지 전부 살리기
+
+  // list(기존 선택지 배열)를 걸러서(filter) 조건에 맞는 것만 새 배열로 만들어 setOptions에 저장
+  setOptions((list) => list.filter((_, i) => i !==index))
+}
+
+
 
 
   function buildRequest(withStyle: DecisionStyle): ConsultRequest {
@@ -252,16 +271,22 @@ export default function DecisionPage() {
     setError(null)
 
     setLoading(true)
+    // 새상담 시작할 때 역질문 초기화
+    setQuestions([])
 
     try {
+      //역질문 합치기 
 
-      const res = await api.post<ConsultResponse>('/decisions/consult', buildRequest(style), { timeout: 120000 })
+      const [consultRes, questionsRes] = await Promise.all([
+        api.post<ConsultResponse>('/decisions/consult', buildRequest(style), { timeout: 120000 }),
+        api.post<QuestionsResponse>('/decisions/questions', buildRequest(style), { timeout: 120000 }),
+      ])
 
-      setResult(res.data.result)
-
+      setResult(consultRes.data.result)
+      setQuestions( questionsRes.data.questions ?? [])
       setResultStyle(null)
-
-      setSaved(res.data.decisionId != null)
+      setSaved(consultRes.data.decisionId != null)
+    
 
     } catch (err) {
 
@@ -616,8 +641,25 @@ export default function DecisionPage() {
           {options.map((opt, i) => (
 
             <div key={i} className="option-card">
+      {/* 삭제 버튼 양쪽 끝으로 정렬 */}
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+    {/* 왼쪽에 '선택지 1, 2...' 배지 표시 */}
+    <span className="badge">선택지 {i + 1}</span>
+    {/* 3개 이상일때만 삭제 버튼 표시 */}
+    {options.length > 2 && (
+      /* 누르면 해당 순서(i)의 선택지를 지우는 삭제 버튼 */
+      <button
+        type="button"
+        className="btn-restyle"
+        style={{ padding: '2px 8px', fontSize: 12, color: '#dc2626' }}
+        title="선택지 삭제"
+        onClick={() => removeOption(i)}
+      >
+        🗑️ 삭제
+      </button>
+    )}
+  </div>
 
-              <span className="badge">선택지 {i + 1}</span>
 
               <div className="row">
 
@@ -894,32 +936,6 @@ export default function DecisionPage() {
 
       </div>
 
-      {/* [역질문 ]버튼 : 누르면 AI 물어볼 질문을 보여줌*/}
-      <div className="text-center mt-3">
-        <button 
-        type="button"
-        className="btn-restyle"
-        disabled={asking || loading}
-        onClick={() => void askFollowUp()}
-        >
-          {asking ? '질문 만드는 중 ...' : '❓ AI 역질문 받기'}
-        </button>
-      </div>
-      {/*역질문  받은 질문 목록 표시 */}
-      {questions.length > 0 && (
-        <div className = "panel mt-3">
-          <h3>AI 가 물어보는 질문</h3>
-          <ol>
-            {questions.map((q,i)=> (
-              <li key={i}> {q}</li>
-            ))}
-          </ol>
-          </div>
-      )}
-
-
-
-
       {result && (
 
         <div className="card mt-4" ref={resultRef}>
@@ -931,6 +947,20 @@ export default function DecisionPage() {
           </div>
 
           <div className="card-body">
+          {/* AI가 물어보는 역질문 — 결과 맨 윗줄 */} 
+          {questions.length > 0&& (
+            <div className="mb-4" style={{ background : '#f8fafc', padding: 12, borderRadius:8 }}>
+              <strong>❓ AI가 추가로 물어보는 역질문 </strong>
+              <ol className="mt-2 mb-0">
+                {questions.map((q, i ) => (
+                  <li key={i}>{q}</li>
+                ))}
+
+              </ol>
+              </div>
+          )}
+
+
 
             <p style={{ whiteSpace: 'pre-line' }}>{result}</p>
 
