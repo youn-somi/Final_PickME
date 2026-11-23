@@ -79,6 +79,7 @@ function readPrefill(params: URLSearchParams) {
 export default function DecisionPage() {
 
   const { user } = useAuth()
+  const storageKey = user?.id ? `decision_temp_data_${user.id}` : 'decision_temp_data_guest'
   const [params] = useSearchParams()
   const prefill = useMemo(() => readPrefill(params), [params])
   const [categories, setCategories] = useState<string[]>(prefill.categories)
@@ -110,10 +111,11 @@ export default function DecisionPage() {
   const [asking, setAsking] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loadedStorageKey, setLoadedStorageKey] = useState('');
 
   // 로컬스토리지 
   useEffect(() => {
-    const savedTemp = localStorage.getItem('decision_temp_data');
+    const savedTemp = localStorage.getItem(storageKey);
     if (savedTemp) {
       try {
         const parsed = JSON.parse(savedTemp);
@@ -130,17 +132,17 @@ export default function DecisionPage() {
         console.error('임시 저장 데이터를 읽어오는 중 에러 발생', e);
       }
     }
-
+      setLoadedStorageKey(storageKey);
      setIsLoaded(true);
-  }, []);
+  }, [storageKey]);
   //임시 서랍 실시간 저장 
   useEffect(() => {
     //  짐다 꺼내기 전엔 저장 금지 
-    if(!isLoaded) return; 
+    if(!isLoaded ||  loadedStorageKey  !== storageKey)  return; 
     const tempData = { title, content, categories, options, style, conditions, conditionsFree, criteria };
-    localStorage.setItem('decision_temp_data', JSON.stringify(tempData));
+    localStorage.setItem(storageKey, JSON.stringify(tempData));
   } , [isLoaded, title, content, categories, options, style, 
-    conditions ,conditionsFree, criteria ]); 
+    conditions ,conditionsFree, criteria, storageKey, loadedStorageKey ]); 
 
 
 
