@@ -19,6 +19,8 @@ import com.pickme.history.DecisionRepository;
 import com.pickme.member.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
+import com.pickme.member.UserProfileService.ProfileResponse;
+
 
 /** 기존 Flask 의 routes/decision_routes.py 의 저장/프롬프트 준비 부분. */
 @Service
@@ -61,9 +63,12 @@ public class DecisionService {
             List<AiClient.DecisionOption> options, String criteria) {
     }
 
-    public ConsultResponse consult(ConsultRequest req, Integer userId) {
+    public ConsultResponse consult(
+        ConsultRequest req, 
+        Integer userId,
+        ProfileResponse userProfile) {
         Prepared p = prepare(req);
-        String result = aiClient.consult(toAiRequest(p));
+        String result = aiClient.consult(toAiRequest(p, userProfile));
         //Integer savedId = userId == null ? null : save(userId, p, result);
         return new ConsultResponse(result, null);
     }
@@ -77,7 +82,7 @@ public class DecisionService {
     }
 
     public String restyle(ConsultRequest req) {
-        return aiClient.consult(toAiRequest(prepare(req)));
+        return aiClient.consult(toAiRequest(prepare(req), null));
     }
 
     // ai 서버에서 역질문 요청 
@@ -85,7 +90,7 @@ public class DecisionService {
         //기존 상담 입력  정리 ,내용 비어있으면 400 
         Prepared p = prepare(req);
         //함수 호출 질문 목록 받기
-        return aiClient.questions(toAiRequest(p));
+        return aiClient.questions(toAiRequest(p, null));
     }
 
 
@@ -163,11 +168,16 @@ public class DecisionService {
         }
         return new Prepared(categories, style, title, content, conditions, options, truncate(criteria, 1000));
     }
-
-    private static AiClient.DecisionRequest toAiRequest(Prepared p) {
-        return new AiClient.DecisionRequest(p.categories(), p.style(), p.title(), p.content(), p.conditions(),
-                p.options(), p.criteria());
-    }
+    // 프로필을 함께받아서 AI 요청 
+     private static AiClient.DecisionRequest toAiRequest(Prepared p ,ProfileResponse profile) {
+        AiClient.UserProfileForAi aiprofile = profile == null ? null
+        : new AiClient.UserProfileForAi (
+            profile.region(), profile.occupation(), profile.mbti(),
+            profile.interests(), profile.dislikedFoods(), profile.bio());
+        
+        return new AiClient.DecisionRequest(p.categories(), p.style(), p.title(), p.content(), p.conditions(), p.options(), p.criteria(), aiprofile);
+    } 
+    
 
     private static <T> List<T> nonNull(List<T> list) {
         return list == null ? List.of() : list;

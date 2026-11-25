@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pickme.decision.DecisionService.ConsultRequest;
 import com.pickme.decision.DecisionService.ConsultResponse;
 import com.pickme.member.LoginUser;
+import com.pickme.member.UserProfileService; 
 
 /** 결정 도우미. 로그인 없이도 상담할 수 있고, 로그인 상태면 고민 기록에 저장됩니다. */
 @RestController
@@ -20,14 +21,27 @@ import com.pickme.member.LoginUser;
 public class DecisionController {
 
     private final DecisionService decisionService;
+    private final UserProfileService userProfileService;
+    
 
-    public DecisionController(DecisionService decisionService) {
+
+    public DecisionController(
+        DecisionService decisionService, UserProfileService userProfileService) {
         this.decisionService = decisionService;
+        this.userProfileService = userProfileService;
     }
 
     @PostMapping("/consult")
     public ConsultResponse consult(@RequestBody ConsultRequest req) {
-        return decisionService.consult(req, LoginUser.currentIdOrNull());
+        Integer userId = LoginUser.currentIdOrNull();
+
+        // 로그인한 사용자 마이페이지 정보 조회
+
+        var userProfile = userId != null
+        ? userProfileService.getProfile(userId) 
+        : null;
+
+        return decisionService.consult(req, userId, userProfile);
     }
 
     // 역질문 화면에서 고민을 보내면,  ai 가 물어볼 질문 목록  돌려주기

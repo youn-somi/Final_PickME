@@ -43,10 +43,17 @@ public class AiClient {
 
     public record DecisionOption(String title, String note) {
     }
+      // [마이페이지 사용자 정보] AI 서버의 user_profile 과 같은 구조
+    public record UserProfileForAi(
+            String region, String occupation, String mbti,
+            List<String> interests, List<String> dislikedFoods, String bio) {
+    }
 
+    // [요청 양식] user_profile 칸 추가. JSON 키 이름을 "user_profile" 로 고정합니다.
     public record DecisionRequest(
             List<String> categories, String style, String title, String content,
-            String conditions, List<DecisionOption> options, String criteria) {
+            String conditions, List<DecisionOption> options, String criteria,
+            @JsonProperty("user_profile") UserProfileForAi userProfile) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

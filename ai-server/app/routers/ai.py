@@ -52,6 +52,8 @@ def consult(req: DecisionRequest) -> DecisionResponse:
         req.conditions.strip(),
         options=[o.model_dump() for o in req.options if o.title.strip()],
         criteria=req.criteria,
+        # 마이페이지 정보를 dict 로 바꿔서 전달 
+        user_profile=req.user_profile.model_dump() if req.user_profile else None,
     )
     try:
         return DecisionResponse(result=get_ai_consultation(prompt))
